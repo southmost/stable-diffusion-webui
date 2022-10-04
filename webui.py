@@ -27,37 +27,28 @@ from modules import modelloader
 from modules.paths import script_path
 from modules.shared import cmd_opts
 
-# Cleanup models
+# Cleanup models and load upscalers
 modelloader.cleanup_models()
+modelloader.load_upscalers()
 
-# Setup model
+# Setup model and codeformer model
 modules.sd_models.setup_model()
-
-# Setup codeformer model
 codeformer.setup_model(cmd_opts.codeformer_models_path)
 
-# Setup gfpgan model
+# Setup gfpgan model and face restoration
 gfpgan.setup_model(cmd_opts.gfpgan_models_path)
-
-# Setup face restoration
 shared.face_restorers.append(modules.face_restoration.FaceRestoration())
-
-# Load upscalers
-modelloader.load_upscalers()
 
 # Setup queue lock
 queue_lock = threading.Lock()
 
-# Wrap queued call
+# Wrap queued call and gradio gpu call
 
 def wrap_queued_call(func):
     def f(*args, **kwargs):
         with queue_lock:
             res = func(*args, **kwargs)
-
-# Wrap gradio gpu call
         return res
-
     return f
 
 
@@ -77,14 +68,8 @@ def wrap_gradio_gpu_call(func, extra_outputs=None):
 
         with queue_lock:
             res = func(*args, **kwargs)
-# Load scripts
-
         shared.state.job = ""
-# Load sd model
         shared.state.job_count = 0
-
-# Onchange sd model checkpoint
-
         devices.torch_gc()
 
         return res
@@ -96,7 +81,6 @@ modules.scripts.load_scripts(os.path.join(script_path, "scripts"))
 
 shared.sd_model = modules.sd_models.load_model()
 shared.opts.onchange("sd_model_checkpoint", wrap_queued_call(lambda: modules.sd_models.reload_model_weights(shared.sd_model)))
-
 
 def webui():
 
@@ -133,7 +117,6 @@ def webui():
         print('Reloading modules: modules.ui')
         importlib.reload(modules.ui)
         print('Restarting Gradio')
-
 
 
 if __name__ == "__main__":
