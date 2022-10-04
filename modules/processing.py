@@ -176,16 +176,16 @@ class Processed:
 
 # from https://discuss.pytorch.org/t/help-regarding-slerp-function-for-generative-model-sampling/32475/3
 def slerp(val, low, high):
-    low_norm = low/torch.norm(low, dim=1, keepdim=True)
-    high_norm = high/torch.norm(high, dim=1, keepdim=True)
-    dot = (low_norm*high_norm).sum(1)
+    low_norm = low/torch.norm(low, dim=1, keepdim=True) # normalize low
+    high_norm = high/torch.norm(high, dim=1, keepdim=True) # normalize high
+    dot = (low_norm*high_norm).sum(1) # dot product of normalized low and high
 
-    if dot.mean() > 0.9995:
+    if dot.mean() > 0.9995: # if dot product is close to 1, then return linear interpolation
         return low * val + high * (1 - val)
 
-    omega = torch.acos(dot)
-    so = torch.sin(omega)
-    res = (torch.sin((1.0-val)*omega)/so).unsqueeze(1)*low + (torch.sin(val*omega)/so).unsqueeze(1) * high
+    omega = torch.acos(dot) # angle between low and high
+    so = torch.sin(omega) # sin of angle
+    res = (torch.sin((1.0-val)*omega)/so).unsqueeze(1)*low + (torch.sin(val*omega)/so).unsqueeze(1) * high # slerp
     return res
 
 
@@ -388,6 +388,7 @@ def process_images(p: StableDiffusionProcessing) -> Processed:
                 x_samples_ddim = modules.safety.censor_batch(x_samples_ddim)
 
             for i, x_sample in enumerate(x_samples_ddim):
+                x_sample = x_sample.cpu()
                 x_sample = 255. * np.moveaxis(x_sample.cpu().numpy(), 0, 2)
                 x_sample = x_sample.astype(np.uint8)
 
@@ -488,8 +489,10 @@ class StableDiffusionProcessingTxt2Img(StableDiffusionProcessing):
         x = create_random_tensors([opt_C, self.firstphase_height // opt_f, self.firstphase_width // opt_f], seeds=seeds, subseeds=subseeds, subseed_strength=self.subseed_strength, seed_resize_from_h=self.seed_resize_from_h, seed_resize_from_w=self.seed_resize_from_w, p=self)
         samples = self.sampler.sample(self, x, conditioning, unconditional_conditioning)
 
+        # Truncate the image to the desired size
         truncate_x = (self.firstphase_width - self.firstphase_width_truncated) // opt_f
         truncate_y = (self.firstphase_height - self.firstphase_height_truncated) // opt_f
+            # Scale the latent space
 
         samples = samples[:, :, truncate_y//2:samples.shape[2]-truncate_y//2, truncate_x//2:samples.shape[3]-truncate_x//2]
 
