@@ -27,20 +27,35 @@ from modules import modelloader
 from modules.paths import script_path
 from modules.shared import cmd_opts
 
+# Cleanup models
 modelloader.cleanup_models()
+
+# Setup model
 modules.sd_models.setup_model()
+
+# Setup codeformer model
 codeformer.setup_model(cmd_opts.codeformer_models_path)
+
+# Setup gfpgan model
 gfpgan.setup_model(cmd_opts.gfpgan_models_path)
+
+# Setup face restoration
 shared.face_restorers.append(modules.face_restoration.FaceRestoration())
+
+# Load upscalers
 modelloader.load_upscalers()
+
+# Setup queue lock
 queue_lock = threading.Lock()
 
+# Wrap queued call
 
 def wrap_queued_call(func):
     def f(*args, **kwargs):
         with queue_lock:
             res = func(*args, **kwargs)
 
+# Wrap gradio gpu call
         return res
 
     return f
@@ -62,9 +77,13 @@ def wrap_gradio_gpu_call(func, extra_outputs=None):
 
         with queue_lock:
             res = func(*args, **kwargs)
+# Load scripts
 
         shared.state.job = ""
+# Load sd model
         shared.state.job_count = 0
+
+# Onchange sd model checkpoint
 
         devices.torch_gc()
 
@@ -80,6 +99,7 @@ shared.opts.onchange("sd_model_checkpoint", wrap_queued_call(lambda: modules.sd_
 
 
 def webui():
+
     # make the program just exit at ctrl+c without waiting for anything
     def sigint_handler(sig, frame):
         print(f'Interrupted with signal {sig} in {frame}')
@@ -90,7 +110,7 @@ def webui():
     while 1:
 
         demo = modules.ui.create_ui(wrap_gradio_gpu_call=wrap_gradio_gpu_call)
-        
+
         demo.launch(
             share=cmd_opts.share,
             server_name="0.0.0.0" if cmd_opts.listen else None,
@@ -108,7 +128,6 @@ def webui():
                 demo.close()
                 time.sleep(0.5)
                 break
-
         print('Reloading Custom Scripts')
         modules.scripts.reload_scripts(os.path.join(script_path, "scripts"))
         print('Reloading modules: modules.ui')
