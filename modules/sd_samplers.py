@@ -77,7 +77,9 @@ def extended_tdqm(sequence, *args, desc=None, **kwargs):
     state.sampling_steps = len(sequence)
     state.sampling_step = 0
 
-    for x in tqdm.tqdm(sequence, *args, desc=state.job, file=shared.progress_print_out, **kwargs):
+    seq = sequence if cmd_opts.disable_console_progressbars else tqdm.tqdm(sequence, *args, desc=state.job, file=shared.progress_print_out, **kwargs)
+
+    for x in seq:
         if state.interrupted:
             break
 
@@ -125,7 +127,7 @@ class VanillaStableDiffusionSampler:
         return res
 
     def initialize(self, p):
-        self.eta = p.eta or opts.eta_ddim
+        self.eta = p.eta if p.eta is not None else opts.eta_ddim
 
         for fieldname in ['p_sample_ddim', 'p_sample_plms']:
             if hasattr(self.sampler, fieldname):
@@ -207,7 +209,9 @@ def extended_trange(sampler, count, *args, **kwargs):
     state.sampling_steps = count
     state.sampling_step = 0
 
-    for x in tqdm.trange(count, *args, desc=state.job, file=shared.progress_print_out, **kwargs):
+    seq = range(count) if cmd_opts.disable_console_progressbars else tqdm.trange(count, *args, desc=state.job, file=shared.progress_print_out, **kwargs)
+
+    for x in seq:
         if state.interrupted:
             break
 
