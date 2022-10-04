@@ -1,5 +1,3 @@
-// A full size 'lightbox' preview modal shown when left clicking on gallery previews
-
 function closeModal() {
   gradioApp().getElementById("lightboxModal").style.display = "none";
 }
@@ -200,7 +198,6 @@ document.addEventListener("DOMContentLoaded", function() {
     modalNext.addEventListener('keydown', modalKeyHandler, true)
 
     modal.appendChild(modalNext)
-
 
     gradioApp().getRootNode().appendChild(modal)
     
