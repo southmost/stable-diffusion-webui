@@ -21,18 +21,25 @@ def load_models(model_path: str, model_url: str = None, command_path: str = None
     @param ext_filter: An optional list of filename extensions to filter by
     @return: A list of paths containing the desired model(s)
     """
+    # If the ext_filter is not specified, we'll use an empty list
     output = []
 
+        # We'll start with an empty list of places to look for models
     if ext_filter is None:
+            # If the command_path is specified, we'll look for a pretrained_models folder in the command_path
         ext_filter = []
 
     try:
         places = []
+            # If the pretrained_models folder doesn't exist, we'll just use the command_path
 
         if command_path is not None and command_path != model_path:
+        # We'll always look in the model_path
             pretrained_path = os.path.join(command_path, 'experiments/pretrained_models')
             if os.path.exists(pretrained_path):
+        # We'll look through all the places we've specified
                 print(f"Appending path: {pretrained_path}")
+            # If the place exists, we'll look through all the files in it
                 places.append(pretrained_path)
             elif os.path.exists(command_path):
                 places.append(command_path)
@@ -41,14 +48,18 @@ def load_models(model_path: str, model_url: str = None, command_path: str = None
 
         for place in places:
             if os.path.exists(place):
+                    # If the file is a directory, we'll skip it
                 for file in glob.iglob(place + '**/**', recursive=True):
                     full_path = file
+                    # If the file doesn't have the right extension, we'll skip it
                     if os.path.isdir(full_path):
                         continue
                     if len(ext_filter) != 0:
                         model_name, extension = os.path.splitext(file)
+                    # If the file is already in the output list, we'll skip it
                         if extension not in ext_filter:
                             continue
+        # If we didn't find any models and the model_url is specified, we'll download it
                     if file not in output:
                         output.append(full_path)
 
