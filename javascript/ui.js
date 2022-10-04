@@ -181,6 +181,9 @@ onUiUpdate(function(){
         }
     });
 
+    Object.defineProperty(textarea, 'value', {
+    });
+
     json_elem.parentElement.style.display="none"
 
 	if (!txt2img_textarea) {
